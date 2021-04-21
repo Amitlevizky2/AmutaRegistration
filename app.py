@@ -16,8 +16,7 @@ SITE_KEY = 'aacce8033f7a9730040b45df047e3191'
 
 
 app = Flask(__name__)
-cors = CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
+
 
 
 @app.route('/register')
@@ -226,3 +225,5 @@ def json_response(is_error, message, json_data):
 
 if __name__ == '__main__':
     app.run(debug=True)
+    cors = CORS(app)
+    app.config['CORS_HEADERS'] = 'Content-Type'
