@@ -18,6 +18,7 @@ SITE_KEY = 'aacce8033f7a9730040b45df047e3191'
 app = Flask(__name__)
 
 cors = CORS(app, resources={r"/*": {"origins": "*", "allow_headers": "*", "expose_headers": "*"}})
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 
