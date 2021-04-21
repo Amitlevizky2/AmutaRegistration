@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-
+from flask_cors import CORS, cross_origin
 import requests
 import json
 import sys
@@ -16,9 +16,12 @@ SITE_KEY = 'aacce8033f7a9730040b45df047e3191'
 
 
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 @app.route('/register')
+@cross_origin()
 def register():
     data = json.loads(request.data)
     username = data.get('username')
@@ -82,6 +85,7 @@ def register():
 
 
 @app.route('/login')
+@cross_origin()
 def login():
     data = json.loads(request.data)
     username = data.get('username')
@@ -196,6 +200,7 @@ def fill_contact_details(contact_id, api_key, firstname, lastname, session):
     response = session.post(URL, params=params)
 
 @app.route('/logout')
+@cross_origin()
 def logout():
     email = request.args.get('email')
     session = requests.Session()
