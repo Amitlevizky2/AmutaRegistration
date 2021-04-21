@@ -15,9 +15,9 @@ API_KEY = 'HLd3GTnYMRw6FGMgW7XxFD3K'
 SITE_KEY = 'aacce8033f7a9730040b45df047e3191'
 
 
-app = Flask(_name_)
+app = Flask(__name__)
 
-cors = CORS(app, resources={r"/": {"origins": "", "allow_headers": "", "expose_headers": ""}})
+cors = CORS(app, resources={r"/*": {"origins": "*", "allow_headers": "*", "expose_headers": "*"}})
 
 
 
@@ -222,5 +222,7 @@ def json_response(is_error, message, json_data):
         "Data": json_data
     }
 
-if _name_ == '_main_':
+if __name__ == '__main__':
     app.run(debug=True)
+    # app.config['CORS_HEADERS'] = 'Content-Type'
+    # app.config['Secret_Key'] = 'Content-Type'
