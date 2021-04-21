@@ -22,7 +22,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 
-@app.route('/register', method=['POST'])
+@app.route('/register', methods=['POST'])
 @cross_origin()
 def register():
     data = json.loads(request.data)
