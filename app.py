@@ -83,9 +83,10 @@ def register():
 
 @app.route('/login')
 def login():
-    username = request.args.get('username')
-    password = request.args.get('password')
-    email = request.args.get('email')
+    data = json.loads(request.data)
+    username = data.get('username')
+    password = data.get('password')
+    email = data.get('email')
     session = requests.Session()
     session.headers.update()
     payload = {
