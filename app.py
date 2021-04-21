@@ -85,6 +85,7 @@ def register():
 
 
 @app.route('/login', methods=['POST'])
+@cross_origin()
 def login():
     data = json.loads(request.data)
     username = data.get('username')
