@@ -15,12 +15,13 @@ API_KEY = 'HLd3GTnYMRw6FGMgW7XxFD3K'
 SITE_KEY = 'aacce8033f7a9730040b45df047e3191'
 
 
-app = Flask(__name__)
+app = Flask(_name_)
+
+cors = CORS(app, resources={r"/": {"origins": "", "allow_headers": "", "expose_headers": ""}})
 
 
 
 @app.route('/register')
-@cross_origin()
 def register():
     data = json.loads(request.data)
     username = data.get('username')
@@ -83,8 +84,7 @@ def register():
     )
 
 
-@app.route('/login')
-@cross_origin()
+@app.route('/login', methods=['POST'])
 def login():
     data = json.loads(request.data)
     username = data.get('username')
@@ -199,7 +199,7 @@ def fill_contact_details(contact_id, api_key, firstname, lastname, session):
     response = session.post(URL, params=params)
 
 @app.route('/logout')
-@cross_origin()
+
 def logout():
     email = request.args.get('email')
     session = requests.Session()
@@ -222,8 +222,5 @@ def json_response(is_error, message, json_data):
         "Data": json_data
     }
 
-
-if __name__ == '__main__':
+if _name_ == '_main_':
     app.run(debug=True)
-    cors = CORS(app)
-    app.config['CORS_HEADERS'] = 'Content-Type'
