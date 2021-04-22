@@ -1,24 +1,16 @@
-from flask import Flask, jsonify, request
-
+from flask import Flask, jsonify, request, Blueprint
 import requests
 import json
 import sys
 import secrets
 import re
+import globals
 
 
-EC2_INSTANCE_IP = "http://52.90.78.193"
+auth = Blueprint('auth', __name__)
 
-URL = "http://52.90.78.193/modules/contrib/civicrm/extern/rest.php?"
-
-API_KEY = 'HLd3GTnYMRw6FGMgW7XxFD3K'
-SITE_KEY = 'aacce8033f7a9730040b45df047e3191'
-
-
-app = Flask(__name__)
-
-
-@app.route('/register')
+# Requests Routes:
+@auth.route('/register')
 def register():
     data = json.loads(request.data)
     username = data.get('username')
@@ -81,7 +73,7 @@ def register():
     )
 
 
-@app.route('/login')
+@auth.route('/login')
 def login():
     data = json.loads(request.data)
     username = data.get('username')
@@ -126,13 +118,28 @@ def login():
             json_data={"API_KEY": api_key}
         )
 
+@auth.route('/logout')
+def logout():
+    email = request.args.get('email')
+    session = requests.Session()
+    session.headers.update()
+    contact_id = get_contact_id(email, session)
 
+    empty_api = ''
+    attach_api_key_to_contact(contact_id, empty_api, session)
+    return json_response(
+        is_error=0,
+        message="Successfully logged out",
+        json_data={"API_KEY": empty_api}
+    )
+
+# Auxiliary Functions:
 def login_to_civi(payload, session):
-    response = session.post(f"{EC2_INSTANCE_IP}/user", data=payload)
+    response = session.post(f"{globals.EC2_INSTANCE_IP}/user", data=payload)
     print(response.text)
     print(response.headers)
     print(session.cookies)
-    response = session.post(f"{EC2_INSTANCE_IP}/user", data=payload)
+    response = session.post(f"{globals.EC2_INSTANCE_IP}/user", data=payload)
 
     if 'Log out' in str(response.content):
         return True
@@ -141,7 +148,7 @@ def login_to_civi(payload, session):
 
 
 def register_to_civi(payload, session):
-    response = session.post(f"{EC2_INSTANCE_IP}/user/register", data=payload)
+    response = session.post(f"{globals.EC2_INSTANCE_IP}/user/register", data=payload)
 
     if 'Registration successful' in str(response.content):
         return True
@@ -153,11 +160,11 @@ def get_contact_id(email, session):
         'entity': 'Contact',
         'action': 'get',
         'json': json.dumps({"sequential": 1, "email": email}),
-        'api_key': API_KEY,
-        'key': SITE_KEY
+        'api_key': globals.API_KEY,
+        'key': globals.SITE_KEY
     }
 
-    response = session.get(URL, params=params)
+    response = session.get(globals.URL, params=params)
     response_json = response.json()
 
     if response_json.get('values', []):
@@ -176,11 +183,11 @@ def attach_api_key_to_contact(contact_id, api_key, session):
         'entity': 'Contact',
         'action': 'create',
         'json': json.dumps({"id": contact_id, "api_key": api_key}),
-        'api_key': API_KEY,
-        'key': SITE_KEY
+        'api_key': globals.API_KEY,
+        'key': globals.SITE_KEY
     }
 
-    response = session.post(URL, params=params)
+    response = session.post(globals.URL, params=params)
 #     TODO: add error handling
 
 
@@ -189,26 +196,11 @@ def fill_contact_details(contact_id, api_key, firstname, lastname, session):
         'entity': 'Contact',
         'action': 'create',
         'json': json.dumps({"id": contact_id, "api_key": api_key, 'first_name': firstname, 'last_name': lastname}),
-        'api_key': API_KEY,
-        'key': SITE_KEY
+        'api_key': globals.API_KEY,
+        'key': globals.SITE_KEY
     }
 
-    response = session.post(URL, params=params)
-
-@app.route('/logout')
-def logout():
-    email = request.args.get('email')
-    session = requests.Session()
-    session.headers.update()
-    contact_id = get_contact_id(email, session)
-
-    empty_api = ''
-    attach_api_key_to_contact(contact_id, empty_api, session)
-    return json_response(
-        is_error=0,
-        message="Successfully logged out",
-        json_data={"API_KEY": empty_api}
-    )
+    response = session.post(globals.URL, params=params)
 
 
 def json_response(is_error, message, json_data):
@@ -217,7 +209,3 @@ def json_response(is_error, message, json_data):
         "Message": message,
         "Data": json_data
     }
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
