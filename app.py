@@ -231,6 +231,14 @@ def logout():
     session = requests.Session()
     session.headers.update()
     contact = get_contact_details(email, session)
+
+    if not contact:
+        return json_response(
+            is_error=1,
+            message="Failed to log out",
+            json_data={"data": ""}
+        )
+
     contact_id = contact.get('contact_id')
 
     empty_api = ''
