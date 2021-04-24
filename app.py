@@ -14,7 +14,9 @@ API_KEY = 'qtjrB1QzwvBIhMVcPcT3Nw'
 SITE_KEY = 'aacce8033f7a9730040b45df047e3191'
 
 GROUP_NAME_TO_NAME_ID_MAPPER = {
-    "volunteer": "Volunteers_5"
+    "volunteer": "Volunteers_5",
+    "soldier": "Soldiers_7",
+    "staff": "StaffMembers_8"
 }
 
 app = Flask(__name__)
@@ -64,7 +66,7 @@ def register():
 
     contact = get_contact_details(email, session)
     contact_id = contact.get('contact_id')
-    set_contact_group(group_name=group_name_id, contact_id=contact_id, session=session)
+    add_to_contact_group(group_name=group_name_id, contact_id=contact_id, session=session)
 
     if not contact_id:
         return json_response(
@@ -179,7 +181,7 @@ def get_contact_details(email, session):
     return ''
 
 
-def set_contact_group(group_name, contact_id, session):
+def add_to_contact_group(group_name, contact_id, session):
     params = {
         'entity': 'GroupContact',
         'action': 'create',
