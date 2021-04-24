@@ -227,7 +227,8 @@ def fill_contact_details(contact_id, api_key, firstname, lastname, session):
 
 @app.route('/logout')
 def logout():
-    email = request.args.get('email')
+    data = json.loads(request.data)
+    email = data.get('email')
     session = requests.Session()
     session.headers.update()
     contact = get_contact_details(email, session)
