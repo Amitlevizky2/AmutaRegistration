@@ -6,7 +6,6 @@ import sys
 import secrets
 import re
 
-
 EC2_INSTANCE_IP = "http://52.90.78.193"
 
 URL = "http://52.90.78.193/modules/contrib/civicrm/extern/rest.php?"
@@ -18,12 +17,10 @@ GROUP_NAME_TO_NAME_ID_MAPPER = {
     "volunteer": "Volunteers_5"
 }
 
-
 app = Flask(__name__)
 
 cors = CORS(app, resources={r"/*": {"origins": "*", "allow_headers": "*", "expose_headers": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
-
 
 
 @app.route('/register', methods=['POST'])
@@ -65,7 +62,8 @@ def register():
             json_data={"data": ""}
         )
 
-    contact_id = get_contact_id(email, session)
+    contact = get_contact_details(email, session)
+    contact_id = contact.get('contact_id')
     set_contact_group(group_name=group_name_id, contact_id=contact_id, session=session)
 
     if not contact_id:
@@ -78,13 +76,14 @@ def register():
     api_key = create_api_key()
     attach_api_key_to_contact(contact_id, api_key, session)
     fill_contact_details(contact_id, contact_type, firstname, lastname, session)
+    contact = get_contact_details(email, session)
 
     return json_response(
         is_error=0,
         message="Successfully registered to the system",
         json_data={
             "API_KEY": api_key,
-            "contact_id": contact_id
+            "contact": contact
         }
     )
 
@@ -116,7 +115,8 @@ def login():
             json_data={"data": ""}
         )
 
-    contact_id = get_contact_id(email, session)
+    contact = get_contact_details(email, session)
+    contact_id = contact.get('contact_id')
     api_key = create_api_key()
 
     if not contact_id:
@@ -134,7 +134,7 @@ def login():
             message="Successfully logged in",
             json_data={
                 "API_KEY": api_key,
-                "contact_id": contact_id
+                "contact": contact
             }
         )
 
@@ -160,7 +160,7 @@ def register_to_civi(payload, session):
     return False
 
 
-def get_contact_id(email, session):
+def get_contact_details(email, session):
     params = {
         'entity': 'Contact',
         'action': 'get',
@@ -174,7 +174,7 @@ def get_contact_id(email, session):
 
     if response_json.get('values', []):
         if response_json.get('values', [])[0]:
-            return response_json.get('values', [])[0].get('contact_id')
+            return response_json.get('values', [])[0]
         return ''
     return ''
 
@@ -193,7 +193,7 @@ def set_contact_group(group_name, contact_id, session):
 
 
 def create_api_key():
-    return re.sub("[^\w]|[\_]",  'q', secrets.token_urlsafe(16))
+    return re.sub("[^\w]|[\_]", 'q', secrets.token_urlsafe(16))
 
 
 def attach_api_key_to_contact(contact_id, api_key, session):
@@ -206,6 +206,8 @@ def attach_api_key_to_contact(contact_id, api_key, session):
     }
 
     response = session.post(URL, params=params)
+
+
 #     TODO: add error handling
 
 
@@ -220,12 +222,14 @@ def fill_contact_details(contact_id, api_key, firstname, lastname, session):
 
     response = session.post(URL, params=params)
 
+
 @app.route('/logout')
 def logout():
     email = request.args.get('email')
     session = requests.Session()
     session.headers.update()
-    contact_id = get_contact_id(email, session)
+    contact = get_contact_details(email, session)
+    contact_id = contact.get('contact_id')
 
     empty_api = ''
     attach_api_key_to_contact(contact_id, empty_api, session)
@@ -243,7 +247,6 @@ def json_response(is_error, message, json_data):
         "Data": json_data
     }
 
+
 if __name__ == '__main__':
     app.run(debug=True)
-    # app.config['CORS_HEADERS'] = 'Content-Type'
-    # app.config['Secret_Key'] = 'Content-Type'
