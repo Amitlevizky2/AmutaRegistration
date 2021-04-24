@@ -48,12 +48,6 @@ def register():
         'timezone': 'UTC',
         'first_name': firstname,
         'last_name': lastname,
-        # '_qf_default': 'Dynamic:upload',
-        # 'MAX_FILE_SIZE': 83886080,
-        # 'street_address-1': '',
-        # 'city-1': '',
-        # 'postal_code-1': '',
-        # 'country-1': '',
         'edit[civicrm_dummy_field]': 'CiviCRM Dummy Field for Drupal',
     }
 
@@ -82,7 +76,10 @@ def register():
     return json_response(
         is_error=0,
         message="Successfully registered to the system",
-        json_data={"API_KEY": api_key}
+        json_data={
+            "API_KEY": api_key,
+            "contact_id": contact_id
+        }
     )
 
 
@@ -129,7 +126,10 @@ def login():
         return json_response(
             is_error=0,
             message="Successfully logged in",
-            json_data={"API_KEY": api_key}
+            json_data={
+                "API_KEY": api_key,
+                "contact_id": contact_id
+            }
         )
 
 
