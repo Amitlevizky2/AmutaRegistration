@@ -11,8 +11,12 @@ EC2_INSTANCE_IP = "http://52.90.78.193"
 
 URL = "http://52.90.78.193/modules/contrib/civicrm/extern/rest.php?"
 
-API_KEY = 'HLd3GTnYMRw6FGMgW7XxFD3K'
+API_KEY = 'qtjrB1QzwvBIhMVcPcT3Nw'
 SITE_KEY = 'aacce8033f7a9730040b45df047e3191'
+
+GROUP_NAME_TO_NAME_ID_MAPPER = {
+    "volunteer": "Volunteers_5"
+}
 
 
 app = Flask(__name__)
@@ -31,7 +35,8 @@ def register():
     email = data.get('email')
     firstname = data.get('firstname')
     lastname = data.get('lastname')
-    contact_type = data.get('content_type')
+    contact_type = data.get('group_name')
+    group_name_id = GROUP_NAME_TO_NAME_ID_MAPPER.get(data.get('group_name'))
     session = requests.Session()
     session.headers.update()
 
@@ -61,6 +66,7 @@ def register():
         )
 
     contact_id = get_contact_id(email, session)
+    set_contact_group(group_name=group_name_id, contact_id=contact_id, session=session)
 
     if not contact_id:
         return json_response(
@@ -173,6 +179,19 @@ def get_contact_id(email, session):
     return ''
 
 
+def set_contact_group(group_name, contact_id, session):
+    params = {
+        'entity': 'GroupContact',
+        'action': 'create',
+        'json': json.dumps({"group_id": group_name, "contact_id": contact_id}),
+        'api_key': API_KEY,
+        'key': SITE_KEY
+    }
+
+    response = session.post(URL, params=params)
+    #     TODO: add error handling
+
+
 def create_api_key():
     return re.sub("[^\w]|[\_]",  'q', secrets.token_urlsafe(16))
 
@@ -202,7 +221,6 @@ def fill_contact_details(contact_id, api_key, firstname, lastname, session):
     response = session.post(URL, params=params)
 
 @app.route('/logout')
-
 def logout():
     email = request.args.get('email')
     session = requests.Session()
