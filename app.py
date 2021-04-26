@@ -19,6 +19,14 @@ GROUP_NAME_TO_NAME_ID_MAPPER = {
     "staff": "StaffMembers_8"
 }
 
+# Registration/Login status options:
+PENDING = "pending"
+APPROVED = "approved"
+
+
+PENDING_MESSAGE = "Thank you for applying for an account. Your account is currently pending approval by the site administrator."
+REGISTERED_MESSAGE = "Registration successful"
+
 app = Flask(__name__)
 
 cors = CORS(app, resources={r"/*": {"origins": "*", "allow_headers": "*", "expose_headers": "*"}})
@@ -53,9 +61,10 @@ def register():
         'first_name': firstname,
         'last_name': lastname,
         'edit[civicrm_dummy_field]': 'CiviCRM Dummy Field for Drupal',
+        'status': 1
     }
 
-    is_registered = register_to_civi(payload=payload, session=session)
+    is_registered, status = register_to_civi(payload=payload, session=session)
 
     if not is_registered:
         return json_response(
@@ -82,7 +91,7 @@ def register():
 
     return json_response(
         is_error=0,
-        message="Successfully registered to the system",
+        message=PENDING_MESSAGE,
         json_data={
             "API_KEY": api_key,
             "contact": contact
@@ -157,8 +166,13 @@ def login_to_civi(payload, session):
 def register_to_civi(payload, session):
     response = session.post(f"{EC2_INSTANCE_IP}/user/register", data=payload)
 
-    if 'Registration successful' in str(response.content):
-        return True
+    response_str = str(response.content)
+
+    if PENDING_MESSAGE in response_str:
+        return True, PENDING
+
+    if REGISTERED_MESSAGE in response_str:
+        return True, APPROVED
     return False
 
 
