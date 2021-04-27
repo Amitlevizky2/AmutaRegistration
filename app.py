@@ -19,8 +19,15 @@ GROUP_NAME_TO_NAME_ID_MAPPER = {
     "staff": "StaffMembers_8"
 }
 
+GROUP_NAME_CONTACT_SUB_TYPE = {
+    "volunteer": "Volunteer",
+    "soldier": "Soldier",
+    "staff": "StaffMember",
+    "admin": "Admin"
+}
+
 # Registration/Login status options:
-PENDING = "pending"
+PENDING = "Pending"
 APPROVED = "approved"
 
 
@@ -36,19 +43,20 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 @app.route('/register', methods=['POST'])
 @cross_origin()
 def register():
+    """
+    Register to Drupal and CiviCRM System.
+    :return: None.
+    """
     data = json.loads(request.data)
     username = data.get('username')
     password = data.get('password')
     email = data.get('email')
     firstname = data.get('firstname')
     lastname = data.get('lastname')
-    contact_type = data.get('group_name')
+    contact_sub_type = [PENDING, GROUP_NAME_CONTACT_SUB_TYPE.get(data.get('group_name'))]
     group_name_id = GROUP_NAME_TO_NAME_ID_MAPPER.get(data.get('group_name'))
     session = requests.Session()
     session.headers.update()
-
-    contact_id = ''
-    api_key = ''
 
     payload = {
         'name': username,
@@ -73,9 +81,14 @@ def register():
             json_data={"data": ""}
         )
 
-    contact = get_contact_details(email, session)
+    contact = get_contact_details(email=email,
+                                  session=session)
+
     contact_id = contact.get('contact_id')
-    add_to_contact_group(group_name=group_name_id, contact_id=contact_id, session=session)
+
+    add_to_contact_group(group_name=group_name_id,
+                         contact_id=contact_id,
+                         session=session)
 
     if not contact_id:
         return json_response(
@@ -85,23 +98,54 @@ def register():
         )
 
     api_key = create_api_key()
-    attach_api_key_to_contact(contact_id, api_key, session)
-    fill_contact_details(contact_id, contact_type, firstname, lastname, session)
-    contact = get_contact_details(email, session)
+    attach_api_key_to_contact(contact_id=contact_id,
+                              api_key=api_key,
+                              session=session)
+
+    fill_contact_details(contact_id=contact_id,
+                         contact_sub_type=contact_sub_type,
+                         firstname=firstname,
+                         lastname=lastname,
+                         session=session)
+
+    contact = get_contact_details(email=email,
+                                  session=session)
 
     return json_response(
         is_error=0,
         message=PENDING_MESSAGE,
         json_data={
-            "API_KEY": api_key,
             "contact": contact
         }
     )
 
 
+def register_to_civi(payload, session):
+    """
+    Make the API request to CiviCRM and Drupal for registering a new contact
+    :param payload: Request parameters
+    :param session: API Session
+    :return: True if registered successfully else False
+    """
+    response = session.post(f"{EC2_INSTANCE_IP}/user/register", data=payload)
+
+    response_str = str(response.content)
+
+    if PENDING_MESSAGE in response_str:
+        return True, PENDING
+
+    if REGISTERED_MESSAGE in response_str:
+        return True, APPROVED
+    return False
+
+
 @app.route('/login', methods=['POST'])
 @cross_origin()
 def login():
+    """
+    Login To Drupal and CiviCRM user
+    :return: None.
+    """
     data = json.loads(request.data)
     username = data.get('username')
     password = data.get('password')
@@ -115,9 +159,6 @@ def login():
         'op': 'Log in'
     }
 
-    contact_id = ''
-    api_key = ''
-
     is_logged_in = login_to_civi(payload=payload, session=session)
     if not is_logged_in:
         return json_response(
@@ -126,7 +167,8 @@ def login():
             json_data={"data": ""}
         )
 
-    contact = get_contact_details(email, session)
+    contact = get_contact_details(email=email,
+                                  session=session)
     contact_id = contact.get('contact_id')
     api_key = create_api_key()
 
@@ -137,7 +179,9 @@ def login():
             json_data={"data": ""}
         )
 
-    attach_api_key_to_contact(contact_id, api_key, session)
+    attach_api_key_to_contact(contact_id=contact_id,
+                              api_key=api_key,
+                              session=session)
 
     if contact_id:
         return json_response(
@@ -151,28 +195,17 @@ def login():
 
 
 def login_to_civi(payload, session):
+    """
+    Login to the system
+    :param payload: Login parameters
+    :param session: API Session
+    :return: True If successfully login. else False
+    """
     response = session.post(f"{EC2_INSTANCE_IP}/user", data=payload)
-    print(response.text)
-    print(response.headers)
-    print(session.cookies)
     response = session.post(f"{EC2_INSTANCE_IP}/user", data=payload)
 
     if 'Log out' in str(response.content):
         return True
-    return False
-    # return str(response.content)
-
-
-def register_to_civi(payload, session):
-    response = session.post(f"{EC2_INSTANCE_IP}/user/register", data=payload)
-
-    response_str = str(response.content)
-
-    if PENDING_MESSAGE in response_str:
-        return True, PENDING
-
-    if REGISTERED_MESSAGE in response_str:
-        return True, APPROVED
     return False
 
 
@@ -227,11 +260,11 @@ def attach_api_key_to_contact(contact_id, api_key, session):
 #     TODO: add error handling
 
 
-def fill_contact_details(contact_id, api_key, firstname, lastname, session):
+def fill_contact_details(contact_id, firstname, lastname, contact_sub_type, session):
     params = {
         'entity': 'Contact',
         'action': 'create',
-        'json': json.dumps({"id": contact_id, "api_key": api_key, 'first_name': firstname, 'last_name': lastname}),
+        'json': json.dumps({"id": contact_id, 'first_name': firstname, 'last_name': lastname, "contact_sub_type": contact_sub_type}),
         'api_key': API_KEY,
         'key': SITE_KEY
     }
@@ -241,11 +274,16 @@ def fill_contact_details(contact_id, api_key, firstname, lastname, session):
 
 @app.route('/logout', methods=['POST'])
 def logout():
+    """
+    Logout from Drupal CiviCRM user
+    :return: None.
+    """
     data = json.loads(request.data)
     email = data.get('email')
     session = requests.Session()
     session.headers.update()
-    contact = get_contact_details(email, session)
+    contact = get_contact_details(email=email,
+                                  session=session)
 
     if not contact:
         return json_response(
@@ -257,7 +295,9 @@ def logout():
     contact_id = contact.get('contact_id')
 
     empty_api = ''
-    attach_api_key_to_contact(contact_id, empty_api, session)
+    attach_api_key_to_contact(contact_id=contact_id,
+                              api_key=empty_api,
+                              session=session)
     return json_response(
         is_error=0,
         message="Successfully logged out",
@@ -266,6 +306,13 @@ def logout():
 
 
 def json_response(is_error, message, json_data):
+    """
+    Creates json response
+    :param is_error: Error status
+    :param message: Message to send to the client
+    :param json_data: Data should be returned
+    :return: Json response
+    """
     return {
         "is_error": is_error,
         "Message": message,
