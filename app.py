@@ -3,36 +3,26 @@ from flask_cors import CORS, cross_origin
 import requests
 import json
 import sys
-import secrets
-import re
 
-EC2_INSTANCE_IP = "http://52.90.78.193"
+from consts import (EC2_INSTANCE_IP,
+                    URL,
+                    API_KEY,
+                    SITE_KEY,
+                    GROUP_NAME_TO_NAME_ID_MAPPER,
+                    GROUP_NAME_CONTACT_SUB_TYPE,
+                    PENDING,
+                    APPROVED,
+                    PENDING_MESSAGE,
+                    REGISTERED_MESSAGE)
 
-URL = "http://52.90.78.193/modules/contrib/civicrm/extern/rest.php?"
-
-API_KEY = 'qtjrB1QzwvBIhMVcPcT3Nw'
-SITE_KEY = 'aacce8033f7a9730040b45df047e3191'
-
-GROUP_NAME_TO_NAME_ID_MAPPER = {
-    "volunteer": "Volunteers_5",
-    "soldier": "Soldiers_7",
-    "staff": "StaffMembers_8"
-}
-
-GROUP_NAME_CONTACT_SUB_TYPE = {
-    "volunteer": "Volunteer",
-    "soldier": "Soldier",
-    "staff": "StaffMember",
-    "admin": "Admin"
-}
-
-# Registration/Login status options:
-PENDING = "Pending"
-APPROVED = "approved"
-
-
-PENDING_MESSAGE = "Thank you for applying for an account. Your account is currently pending approval by the site administrator."
-REGISTERED_MESSAGE = "Registration successful"
+from utils import (register_to_civi,
+                   login_to_civi,
+                   get_contact_details,
+                   add_to_contact_group,
+                   create_api_key,
+                   attach_api_key_to_contact,
+                   fill_contact_details,
+                   json_response)
 
 app = Flask(__name__)
 
@@ -120,25 +110,6 @@ def register():
     )
 
 
-def register_to_civi(payload, session):
-    """
-    Make the API request to CiviCRM and Drupal for registering a new contact
-    :param payload: Request parameters
-    :param session: API Session
-    :return: True if registered successfully else False
-    """
-    response = session.post(f"{EC2_INSTANCE_IP}/user/register", data=payload)
-
-    response_str = str(response.content)
-
-    if PENDING_MESSAGE in response_str:
-        return True, PENDING
-
-    if REGISTERED_MESSAGE in response_str:
-        return True, APPROVED
-    return False
-
-
 @app.route('/login', methods=['POST'])
 @cross_origin()
 def login():
@@ -194,84 +165,6 @@ def login():
         )
 
 
-def login_to_civi(payload, session):
-    """
-    Login to the system
-    :param payload: Login parameters
-    :param session: API Session
-    :return: True If successfully login. else False
-    """
-    response = session.post(f"{EC2_INSTANCE_IP}/user", data=payload)
-    response = session.post(f"{EC2_INSTANCE_IP}/user", data=payload)
-
-    if 'Log out' in str(response.content):
-        return True
-    return False
-
-
-def get_contact_details(email, session):
-    params = {
-        'entity': 'Contact',
-        'action': 'get',
-        'json': json.dumps({"sequential": 1, "email": email}),
-        'api_key': API_KEY,
-        'key': SITE_KEY
-    }
-
-    response = session.get(URL, params=params)
-    response_json = response.json()
-
-    if response_json.get('values', []):
-        if response_json.get('values', [])[0]:
-            return response_json.get('values', [])[0]
-        return ''
-    return ''
-
-
-def add_to_contact_group(group_name, contact_id, session):
-    params = {
-        'entity': 'GroupContact',
-        'action': 'create',
-        'json': json.dumps({"group_id": group_name, "contact_id": contact_id}),
-        'api_key': API_KEY,
-        'key': SITE_KEY
-    }
-
-    response = session.post(URL, params=params)
-    #     TODO: add error handling
-
-
-def create_api_key():
-    return re.sub("[^\w]|[\_]", 'q', secrets.token_urlsafe(16))
-
-
-def attach_api_key_to_contact(contact_id, api_key, session):
-    params = {
-        'entity': 'Contact',
-        'action': 'create',
-        'json': json.dumps({"id": contact_id, "api_key": api_key}),
-        'api_key': API_KEY,
-        'key': SITE_KEY
-    }
-
-    response = session.post(URL, params=params)
-
-
-#     TODO: add error handling
-
-
-def fill_contact_details(contact_id, firstname, lastname, contact_sub_type, session):
-    params = {
-        'entity': 'Contact',
-        'action': 'create',
-        'json': json.dumps({"id": contact_id, 'first_name': firstname, 'last_name': lastname, "contact_sub_type": contact_sub_type}),
-        'api_key': API_KEY,
-        'key': SITE_KEY
-    }
-
-    response = session.post(URL, params=params)
-
-
 @app.route('/logout', methods=['POST'])
 def logout():
     """
@@ -303,21 +196,6 @@ def logout():
         message="Successfully logged out",
         json_data={"API_KEY": empty_api}
     )
-
-
-def json_response(is_error, message, json_data):
-    """
-    Creates json response
-    :param is_error: Error status
-    :param message: Message to send to the client
-    :param json_data: Data should be returned
-    :return: Json response
-    """
-    return {
-        "is_error": is_error,
-        "Message": message,
-        "Data": json_data
-    }
 
 
 if __name__ == '__main__':
