@@ -2,6 +2,8 @@ import json
 import secrets
 import re
 
+from typing import Dict
+
 from consts import (EC2_INSTANCE_IP,
                     PENDING,
                     PENDING_MESSAGE,
@@ -121,7 +123,7 @@ def attach_api_key_to_contact(contact_id, api_key, session):
 #     TODO: add error handling
 
 
-def fill_contact_details(contact_id, firstname, lastname, contact_sub_type, session):
+def fill_contact_details(contact_id, firstname, lastname, contact_sub_type, session, image_url = None):
     """
     Enrich CiviCRM contact details
     :param contact_id: CiviCRM Contact ID
@@ -129,6 +131,7 @@ def fill_contact_details(contact_id, firstname, lastname, contact_sub_type, sess
     :param lastname: Last name of the contact
     :param contact_sub_type: contact sub type
     :param session: API Session
+    :param image_url: Image URL
     :return: None.
     """
     params = {
@@ -141,6 +144,24 @@ def fill_contact_details(contact_id, firstname, lastname, contact_sub_type, sess
 
     response = session.post(URL, params=params)
 
+def add_details_to_contact(session, contact_details_dict: Dict):
+    """
+    Add provided contact details to a CiviCRM contact.
+    :return: None.
+    """
+    params = {key: contact_details_dict[key] for key in contact_details_dict if contact_details_dict[key]}
+
+    params = {
+        'entity': 'Contact',
+        'action': 'create',
+        'json': json.dumps(params),
+        'api_key': API_KEY,
+        'key': SITE_KEY
+    }
+
+    response = session.post(URL, params=params)
+
+    
 
 def json_response(is_error, message, json_data):
     """

@@ -22,7 +22,8 @@ from utils import (register_to_civi,
                    create_api_key,
                    attach_api_key_to_contact,
                    fill_contact_details,
-                   json_response)
+                   json_response,
+                   add_details_to_contact)
 
 app = Flask(__name__)
 
@@ -45,6 +46,7 @@ def register():
     lastname = data.get('lastname')
     contact_sub_type = [PENDING, GROUP_NAME_CONTACT_SUB_TYPE.get(data.get('group_name'))]
     group_name_id = GROUP_NAME_TO_NAME_ID_MAPPER.get(data.get('group_name'))
+    image_url = data.get('image_url')
     session = requests.Session()
     session.headers.update()
 
@@ -196,6 +198,39 @@ def logout():
         message="Successfully logged out",
         json_data={"API_KEY": empty_api}
     )
+
+@app.route('/upload_doc', methods=['POST'])
+def upload_doc():
+    """
+    Upload document to a CivCRM contact.
+    :return: None.
+    """
+    data = json.loads(request.data)
+    email = data.get('email')
+    doc_url = data.get('url')
+
+    session = requests.Session()
+    session.headers.update()
+
+    contact = get_contact_details(email=email,
+                                  session=session)
+    
+    contact_id = contact.get('contact_id')
+    empty_api = ''
+
+    add_details_to_contact(session=session,
+                           contact_details_dict={
+                               "id": contact_id,
+                               "image_url": doc_url
+                           })
+
+    return json_response(
+        is_error=0,
+        message="Successfully uploaded document.",
+        json_data={"API_KEY": empty_api}
+    )
+
+
 
 
 if __name__ == '__main__':
