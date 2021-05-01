@@ -199,6 +199,7 @@ def logout():
         json_data={"API_KEY": empty_api}
     )
 
+
 @app.route('/upload_doc', methods=['POST'])
 def upload_doc():
     """
@@ -214,14 +215,14 @@ def upload_doc():
 
     contact = get_contact_details(email=email,
                                   session=session)
-    
+
     contact_id = contact.get('contact_id')
     empty_api = ''
 
     add_details_to_contact(session=session,
                            contact_details_dict={
                                "id": contact_id,
-                               "image_url": doc_url
+                               "image_URL": doc_url
                            })
 
     return json_response(
@@ -229,8 +230,6 @@ def upload_doc():
         message="Successfully uploaded document.",
         json_data={"API_KEY": empty_api}
     )
-
-
 
 
 if __name__ == '__main__':
