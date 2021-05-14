@@ -24,3 +24,4 @@ APPROVED = "approved"
 
 PENDING_MESSAGE = "Thank you for applying for an account. Your account is currently pending approval by the site administrator."
 REGISTERED_MESSAGE = "Registration successful"
+UNRECOGNIZED_MESSAGE = "Sorry, unrecognized username or password"

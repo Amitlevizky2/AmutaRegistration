@@ -11,7 +11,8 @@ from consts import (EC2_INSTANCE_IP,
                     REGISTERED_MESSAGE,
                     API_KEY,
                     SITE_KEY,
-                    URL)
+                    URL,
+                    UNRECOGNIZED_MESSAGE)
 
 
 def register_to_civi(payload, session):
@@ -43,9 +44,14 @@ def login_to_civi(payload, session):
     response = session.post(f"{EC2_INSTANCE_IP}/user", data=payload)
     response = session.post(f"{EC2_INSTANCE_IP}/user", data=payload)
 
-    if 'Log out' in str(response.content):
-        return True
-    return False
+    response_content = str(response.content)
+
+    if UNRECOGNIZED_MESSAGE in response_content:
+        return False, UNRECOGNIZED_MESSAGE
+
+    if 'Log out' in response_content:
+        return True, "Successfully logged in"
+    return False, "Unable to login"
 
 
 def get_contact_details(email, session):
@@ -160,7 +166,7 @@ def add_details_to_contact(session, contact_details_dict: Dict):
     }
 
     response = session.post(URL, params=params)
-
+    return response
     
 
 def json_response(is_error, message, json_data):

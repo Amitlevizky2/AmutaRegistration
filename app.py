@@ -13,7 +13,8 @@ from consts import (EC2_INSTANCE_IP,
                     PENDING,
                     APPROVED,
                     PENDING_MESSAGE,
-                    REGISTERED_MESSAGE)
+                    REGISTERED_MESSAGE,
+                    UNRECOGNIZED_MESSAGE)
 
 from utils import (register_to_civi,
                    login_to_civi,
@@ -132,11 +133,12 @@ def login():
         'op': 'Log in'
     }
 
-    is_logged_in = login_to_civi(payload=payload, session=session)
+    is_logged_in, message = login_to_civi(payload=payload, session=session)
+
     if not is_logged_in:
         return json_response(
             is_error=1,
-            message="Failed to log in",
+            message=message,
             json_data={"data": ""}
         )
 
@@ -159,7 +161,7 @@ def login():
     if contact_id:
         return json_response(
             is_error=0,
-            message="Successfully logged in",
+            message=message,
             json_data={
                 "API_KEY": api_key,
                 "contact": contact
@@ -219,17 +221,18 @@ def upload_doc():
     contact_id = contact.get('contact_id')
     empty_api = ''
 
-    add_details_to_contact(session=session,
+    respone = add_details_to_contact(session=session,
                            contact_details_dict={
                                "id": contact_id,
                                "image_URL": doc_url
                            })
 
-    return json_response(
-        is_error=0,
-        message="Successfully uploaded document.",
-        json_data={"API_KEY": empty_api}
-    )
+    return respone
+    # return json_response(
+    #     is_error=0,
+    #     message="Successfully uploaded document.",
+    #     json_data={"API_KEY": empty_api}
+    # )
 
 
 if __name__ == '__main__':
