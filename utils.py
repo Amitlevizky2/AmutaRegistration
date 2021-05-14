@@ -166,7 +166,7 @@ def add_details_to_contact(session, contact_details_dict: Dict):
     }
 
     response = session.post(URL, params=params)
-    return response
+
     
 
 def json_response(is_error, message, json_data):

@@ -221,18 +221,17 @@ def upload_doc():
     contact_id = contact.get('contact_id')
     empty_api = ''
 
-    respone = add_details_to_contact(session=session,
+    add_details_to_contact(session=session,
                            contact_details_dict={
                                "id": contact_id,
                                "image_URL": doc_url
                            })
 
-    return respone
-    # return json_response(
-    #     is_error=0,
-    #     message="Successfully uploaded document.",
-    #     json_data={"API_KEY": empty_api}
-    # )
+    return json_response(
+        is_error=0,
+        message="Successfully uploaded document.",
+        json_data={"API_KEY": empty_api}
+    )
 
 
 if __name__ == '__main__':
