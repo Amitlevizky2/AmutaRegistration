@@ -210,7 +210,7 @@ def upload_doc():
     """
     data = json.loads(request.data)
     email = data.get('email')
-    doc_url = data.get('url')
+    doc_url = data.get('image_URL')
 
     session = requests.Session()
     session.headers.update()
