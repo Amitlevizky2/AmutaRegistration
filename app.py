@@ -24,7 +24,8 @@ from utils import (register_to_civi,
                    attach_api_key_to_contact,
                    fill_contact_details,
                    json_response,
-                   add_details_to_contact)
+                   add_details_to_contact,
+                   attach_address_to_contact)
 
 app = Flask(__name__)
 
@@ -45,6 +46,9 @@ def register():
     email = data.get('email')
     firstname = data.get('firstname')
     lastname = data.get('lastname')
+    street_name = data.get('street_name')
+    street_number = data.get('street_number')
+    city = data.get('city')
     contact_sub_type = [PENDING, GROUP_NAME_CONTACT_SUB_TYPE.get(data.get('group_name'))]
     group_name_id = GROUP_NAME_TO_NAME_ID_MAPPER.get(data.get('group_name'))
     image_url = data.get('image_url')
@@ -100,6 +104,12 @@ def register():
                          firstname=firstname,
                          lastname=lastname,
                          session=session)
+
+    attach_address_to_contact(session=session,
+                              contact_id=contact_id,
+                              street_name=street_name,
+                              street_number=street_number,
+                              city=city)
 
     contact = get_contact_details(email=email,
                                   session=session)

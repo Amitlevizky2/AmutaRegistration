@@ -143,7 +143,29 @@ def fill_contact_details(contact_id, firstname, lastname, contact_sub_type, sess
     params = {
         'entity': 'Contact',
         'action': 'create',
-        'json': json.dumps({"id": contact_id, 'first_name': firstname, 'last_name': lastname, "contact_sub_type": contact_sub_type}),
+        'json': json.dumps(
+            {
+                "id": contact_id,
+                'first_name': firstname,
+                'last_name': lastname,
+                "contact_sub_type": contact_sub_type}),
+        'api_key': API_KEY,
+        'key': SITE_KEY
+    }
+
+    response = session.post(URL, params=params)
+
+def attach_address_to_contact(session, contact_id, street_name = "", street_number = "", city = ""):
+    params = {
+        'entity': 'Address',
+        'action': 'create',
+        'json': json.dumps(
+            {
+                "contact_id": contact_id or '',
+                "location_type_id": "Home",
+                'street_name': street_name or '',
+                'street_number': street_number or '',
+                "city": city}),
         'api_key': API_KEY,
         'key': SITE_KEY
     }
