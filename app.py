@@ -211,7 +211,7 @@ def logout():
         json_data={"API_KEY": empty_api}
     )
 
-@app.route('/update_contact')
+@app.route('/update_contact', methods=['POST'])
 def update_contact():
     data = json.loads(request.data)
     email = data.get('email')
