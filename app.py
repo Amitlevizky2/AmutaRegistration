@@ -211,6 +211,29 @@ def logout():
         json_data={"API_KEY": empty_api}
     )
 
+@app.route('/update_contact')
+def update_contact():
+    data = json.loads(request.data)
+    email = data.get('email')
+    session = requests.Session()
+    session.headers.update()
+    contact_details = get_contact_details(email=email, session=session)
+
+    if not contact_details:
+        return json_response(
+        is_error=1,
+        message="Failed to retriev contact details",
+        json_data={"API_KEY": ''}
+    ) 
+
+
+    return json_response(
+        is_error=0,
+        message="Successfully fetched contact details",
+        json_data={"API_KEY": '',
+                   "contact": contact_details}
+    ) 
+
 
 @app.route('/upload_doc', methods=['POST'])
 def upload_doc():
