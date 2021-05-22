@@ -191,6 +191,7 @@ def attach_phone_to_contact(session, contact_id, phone_number = "123"):
     }
 
     response = session.post(URL, params=params)
+    print(response)
 
 def add_details_to_contact(session, contact_details_dict: Dict):
     """
