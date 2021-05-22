@@ -74,7 +74,7 @@ def register():
     if not is_registered:
         return json_response(
             is_error=1,
-            message="Failed register to the system",
+            message=f"Failed register to the system. Error is: {status}",
             json_data={"data": ""}
         )
 
