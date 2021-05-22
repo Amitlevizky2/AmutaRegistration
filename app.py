@@ -50,7 +50,6 @@ def register():
     street_name = data.get('street_name')
     street_number = data.get('street_number')
     phone_number = data.get('phonenumber')
-    print(phone_number)
     city = data.get('city')
     contact_sub_type = [PENDING, GROUP_NAME_CONTACT_SUB_TYPE.get(data.get('group_name'))]
     group_name_id = GROUP_NAME_TO_NAME_ID_MAPPER.get(data.get('group_name'))
