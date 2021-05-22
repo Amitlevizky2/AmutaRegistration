@@ -12,7 +12,9 @@ from consts import (EC2_INSTANCE_IP,
                     API_KEY,
                     SITE_KEY,
                     URL,
-                    UNRECOGNIZED_MESSAGE)
+                    UNRECOGNIZED_MESSAGE,
+                    ALREADY_REGISTERED_MESSAGE,
+                    ALREADY_REGISTERED_ERROR)
 
 
 def register_to_civi(payload, session):
@@ -31,6 +33,9 @@ def register_to_civi(payload, session):
 
     if REGISTERED_MESSAGE in response_str:
         return True, APPROVED
+
+    if ALREADY_REGISTERED_ERROR in response_str:
+        return False, ALREADY_REGISTERED_MESSAGE.format(payload.get("mail", "Unknown"))
     return False, APPROVED
 
 
