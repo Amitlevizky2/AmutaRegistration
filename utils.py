@@ -177,6 +177,21 @@ def attach_address_to_contact(session, contact_id, street_name = "", street_numb
 
     response = session.post(URL, params=params)
 
+def attach_phone_to_contact(session, contact_id, phone_number = "123"):
+    params = {
+        'entity': 'Phone',
+        'action': 'create',
+        'json': json.dumps(
+            {
+                "contact_id": contact_id or '',
+                "phone": phone_number
+            }),
+        'api_key': API_KEY,
+        'key': SITE_KEY
+    }
+
+    response = session.post(URL, params=params)
+
 def add_details_to_contact(session, contact_details_dict: Dict):
     """
     Add provided contact details to a CiviCRM contact.
